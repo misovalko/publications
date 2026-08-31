@@ -9,18 +9,31 @@ permissions:
   contents: write
 
 jobs:
-  inspect-source:
+  probe-historical:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Inspect arXiv source package
+      - name: Probe old public publication URLs
         shell: bash
         run: |
-          set -euo pipefail
-          mkdir -p /tmp/arxiv-src
-          curl -L --fail --retry 3 'https://export.arxiv.org/e-print/1601.05675' -o /tmp/source.tar
-          tar -xf /tmp/source.tar -C /tmp/arxiv-src || (cd /tmp/arxiv-src && gunzip -c /tmp/source.tar | tar -xf -)
-          echo '--- FILES ---'
-          find /tmp/arxiv-src -type f -printf '%P\n' | sort
-          echo '--- RELEVANT ---'
-          find /tmp/arxiv-src -type f | grep -Ei 'graph_new|final-plot|data\.pdf|toy_result|edge_ratio|l20|l100|legend_|complexity|guarantees|inria|baposter|mathdef|symbolsdef|noReferences|poster' || true
+          set -u
+          probe() {
+            url="$1"
+            tmp="$(mktemp)"
+            code=$(curl -L -sS --max-time 30 -o "$tmp" -w '%{http_code}' "$url" || true)
+            bytes=$(wc -c < "$tmp" | tr -d ' ')
+            head4=$(head -c 4 "$tmp" 2>/dev/null || true)
+            printf '%s bytes=%s pdf=%s url=%s\n' "$code" "$bytes" "$head4" "$url"
+            rm -f "$tmp"
+          }
+          base='https://researchers.lille.inria.fr/~valko/hp'
+          for f in \
+            kveton2010semisupervised.poster.pdf \
+            kveton2010semi-supervised.poster.pdf \
+            kveton2010semisupervised.poster2.pdf \
+            calandriello2016incremental.poster.pdf \
+            calandriello2016incremental.dali.poster.pdf \
+            calandriello2016sparse-hfs.poster.pdf \
+            poster_ssl.pdf; do
+            probe "$base/publications/$f"
+            probe "$base/serve.php?what=publications%2F$f"
+          done
