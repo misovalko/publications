@@ -1,0 +1,10 @@
+@article{scheid2024optimal,
+  abstract = {Reinforcement Learning from Human Feedback (RLHF) has become a popular approach to align language models (LMs) with human preferences. This method involves collecting a large dataset of human pairwise preferences across various text generations and using it to infer (implicitly or explicitly) a reward model. Numerous methods have been proposed to learn the reward model and align a LM with it. However, the costly process of collecting human preferences has received little attention and could benefit from theoretical insights. This paper addresses this issue and aims to formalize the reward training model in RLHF. We frame the selection of an effective dataset as a simple regret minimization task, using a linear contextual dueling bandit method. Given the potentially large number of arms, this approach is more coherent than the best-arm identification setting. We then propose an offline framework for solving this problem. Under appropriate assumptions, linearity of the reward model in the embedding space, and boundedness of the reward parameter, we derive bounds on the simple regret. Finally, we provide a lower bound that matches our upper bound up to constant and logarithmic terms. To our knowledge, this is the first theoretical contribution in this area to provide an offline approach as well as worst-case guarantees.},
+  author = {Antoine Scheid and Étienne Boursier and Alain Durmus and Michael I Jordan and Pierre Ménard and Éric Moulines and Michal Valko},
+  title = {{Optimal design for reward modeling in RLHF}},
+  url = {https://misovalko.github.io/publications/scheid2024optimal.pdf},
+  archivePrefix = {arXiv},
+  arxivId = {2410.17055},
+  eprint = {2410.17055},
+  year = {2024}
+}

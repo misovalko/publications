@@ -1,0 +1,11 @@
+@inproceedings{derezinski2019exact,
+  abstract = {We study the complexity of sampling from a distribution over all index subsets of the set (1,...,n) with the probability of a subset S proportional to the determinant of the submatrix LS of some n x n p.s.d. matrix L, where LS corresponds to the entries of L indexed by S. Known as a determinantal point process, this distribution is used in machine learning to induce diversity in subset selection. In practice, we often wish to sample multiple subsets S with small expected size k = E[card(S)] that are all drawn independently from the same distribution. The standard algorithm for sampling a set uses a spectral decomposition of the matrix L, which requires a full rank update to the matrix for every sample, and thus O(n^3) preprocessing time per sample after the initial eigendecomposition. In this paper, we show that, in certain regimes, it is possible to reduce the preprocessing time to O(n^2 log^2 n) per sample, which is sublinear in the matrix size, while maintaining the exact sampling distribution. We achieve this by using a randomized algorithm that samples from a distribution that is close to the desired distribution in total variation distance, and then show how to correct for the bias efficiently. Our algorithm leverages properties of determinantal point processes and uses a novel approach to approximate the eigendecomposition of the kernel matrix.},
+  author = {Michał Dereziński* and Daniele Calandriello* and Michal Valko},
+  booktitle = {Neural Information Processing Systems},
+  title = {{Exact sampling of determinantal point processes with sublinear time preprocessing}},
+  url = {https://misovalko.github.io/publications/derezinski2019exact.pdf},
+  archivePrefix = {arXiv},
+  arxivId = {1905.13476},
+  eprint = {1905.13476},
+  year = {2019}
+}

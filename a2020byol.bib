@@ -1,0 +1,11 @@
+@inproceedings{a2020byol,
+  abstract = {Bootstrap Your Own Latent (BYOL) is a self-supervised learning approach for image representation. From an augmented view of an image, BYOL trains an online network to predict a target network representation of a different augmented view of the same image. Unlike contrastive methods, BYOL does not explicitly use a repulsion term built from negative pairs in its training objective. Yet, it avoids collapse to a trivial, constant representation. Thus, it has recently been hypothesized that batch normalization (BN) is critical to prevent collapse in BYOL. Indeed, BN flows gradients across batch elements, and could leak information about negative views in the batch, which could act as an implicit negative (contrastive) term. However, we experimentally show that replacing BN with a batch-independent normalization scheme (namely, a combination of group normalization and weight standardization) achieves performance comparable to vanilla BYOL ({\$}73.9\backslash{\%}{\$} vs. {\$}74.3\backslash{\%}{\$} top-1 accuracy under the linear evaluation protocol on ImageNet with ResNet-{\$}50{\$}). Our finding disproves the hypothesis that the use of batch statistics is a crucial ingredient for BYOL to learn useful representations.},
+  author = {Pierre H. Richemond and Jean-Bastien Grill and Florent Altché and Corentin Tallec and Florian Strub and Andrew Brock and Samuel Smith and Soham De and Razvan Pascanu and Bilal Piot and Michal Valko},
+  booktitle = {Neural Information Processing Systems},
+  title = {{BYOL works even without batch statistics}},
+  url = {https://misovalko.github.io/publications/richemond2020byol.pdf},
+  archivePrefix = {arXiv},
+  arxivId = {2010.10241},
+  eprint = {2010.10241},
+  year = {2020}
+}

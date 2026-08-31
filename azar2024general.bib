@@ -1,0 +1,11 @@
+@inproceedings{azar2024general,
+  abstract = {The prevalent deployment of learning from human preferences through reinforcement learning (RLHF) relies on two important approximations: the first assumes that pairwise preferences can be substituted with pointwise rewards. The second assumes that a reward model trained on these pointwise rewards can generalize from collected data to out-of-distribution data sampled by the policy. Recently, Direct Preference Optimisation (DPO) has been proposed as an approach that bypasses the second approximation and learn directly a policy from collected data without the reward modelling stage. However, this method still heavily relies on the first approximation. In this paper we try to gain a deeper theoretical understanding of these practical algorithms. In particular we derive a new general objective called ΨPO for learning from human preferences that is expressed in terms of pairwise preferences and therefore bypasses both approximations. This new general objective allows us to perform an in-depth analysis of the behavior of RLHF and DPO (as special cases of ΨPO) and to identify their potential pitfalls. We then consider another special case for ΨPO by setting Ψ simply to Identity, for which we can derive an efficient optimisation procedure, prove performance guarantees and demonstrate its empirical superiority to DPO on some illustrative examples.},
+  author = {Mohammad Gheshlaghi Azar and Mark Rowland and Bilal Piot and Zhaohan Daniel Guo and Daniele Calandriello and Michal Valko and Rémi Munos},
+  booktitle = {International Conference on Artificial Intelligence and Statistics},
+  title = {{A general theoretical paradigm to understand learning from human preferences}},
+  url = {https://misovalko.github.io/publications/azar2024unified.pdf},
+  archivePrefix = {arXiv},
+  arxivId = {2310.12036},
+  eprint = {2310.12036},
+  year = {2024}
+}

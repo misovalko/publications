@@ -1,0 +1,11 @@
+@inproceedings{tarbouriech2020improved,
+  abstract = {We investigate the exploration of an unknown environment when no reward function is provided. Building on the incremental exploration setting introduced by Lim and Auer [1], we define the objective of learning the set of ϵ-optimal goal-conditioned policies attaining all states that are incrementally reachable within L steps (in expectation) from a reference state s0. In this paper, we introduce a novel model-based approach that interleaves discovering new states from s0 and improving the accuracy of a model estimate that is used to compute goal-conditioned policies to reach newly discovered states. The resulting algorithm, DisCo, achieves a sample complexity scaling as Õ (L5SL+ϵ$\Gamma$L+ϵAϵ−2), where A is the number of actions, SL+ϵ is the number of states that are incrementally reachable from s0 in L+ϵ steps, and $\Gamma$L+ϵ is the branching factor of the dynamics over such states. This improves over the algorithm proposed in [1] in both ϵ and L at the cost of an extra $\Gamma$L+ϵ factor, which is small in most environments of interest. Furthermore, DisCo is the first algorithm that can return an ϵ/cmin-optimal policy for any cost-sensitive shortest-path problem defined on the L-reachable states with minimum cost cmin. Finally, we report preliminary empirical results confirming our theoretical findings.},
+  author = {Jean Tarbouriech and Matteo Pirotta and Michal Valko and Alessandro Lazaric},
+  booktitle = {Neural Information Processing Systems},
+  title = {{Improved sample complexity for incremental autonomous exploration in MDPs}},
+  url = {https://misovalko.github.io/publications/tarbouriech2020improved.pdf},
+  archivePrefix = {arXiv},
+  arxivId = {2012.14755},
+  eprint = {2012.14755},
+  year = {2020}
+}

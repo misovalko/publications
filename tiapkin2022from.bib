@@ -1,0 +1,11 @@
+@inproceedings{tiapkin2022from,
+  abstract = {We propose the Bayes-UCBVI algorithm for reinforcement learning in tabular, stage-dependent, episodic Markov decision process: a natural extension of the Bayes-UCB algorithm by Kaufmann et al. (2012) for multi-armed bandits. Our method uses the quantile of a Q-value function posterior as upper confidence bound on the optimal Q-value function. For Bayes-UCBVI, we prove a regret bound of order $\widetilde{O}(\sqrt{H^3SAT})$ where $H$ is the length of one episode, $S$ is the number of states, $A$ the number of actions, $T$ the number of episodes, that matches the lower-bound of $Ω(\sqrt{H^3SAT})$ up to poly-$\log$ terms in $H,S,A,T$ for a large enough $T$. To the best of our knowledge, this is the first algorithm that obtains an optimal dependence on the horizon $H$ (and $S$) without the need for an involved Bernstein-like bonus or noise. Crucial to our analysis is a new fine-grained anti-concentration bound for a weighted Dirichlet sum that can be of independent interest. We then explain how Bayes-UCBVI can be easily extended beyond the tabular setting, exhibiting a strong link between our algorithm and Bayesian bootstrap (Rubin, 1981).},
+  author = {Daniil Tiapkin and Denis Belomestny and Éric Moulines and Alexey Naumov and Sergey Samsonov and Yunhao Tang and Michal Valko and Pierre Ménard},
+  booktitle = {International Conference on Machine Learning},
+  title = {{From Dirichlet to Rubin: Optimistic exploration in RL without bonuses}},
+  url = {https://misovalko.github.io/publications/tiapkin2022dirichlet.pdf},
+  archivePrefix = {arXiv},
+  arxivId = {2205.07704},
+  eprint = {2205.07704},
+  year = {2022}
+}
