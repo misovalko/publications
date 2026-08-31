@@ -9,31 +9,227 @@ permissions:
   contents: write
 
 jobs:
-  probe-historical:
+  build-dali-poster:
     runs-on: ubuntu-latest
     steps:
-      - name: Probe old public publication URLs
+      - uses: actions/checkout@v4
+      - name: Build archival DALI poster from public research source
         shell: bash
         run: |
-          set -u
-          probe() {
-            url="$1"
-            tmp="$(mktemp)"
-            code=$(curl -L -sS --max-time 30 -o "$tmp" -w '%{http_code}' "$url" || true)
-            bytes=$(wc -c < "$tmp" | tr -d ' ')
-            head4=$(head -c 4 "$tmp" 2>/dev/null || true)
-            printf '%s bytes=%s pdf=%s url=%s\n' "$code" "$bytes" "$head4" "$url"
-            rm -f "$tmp"
-          }
-          base='https://researchers.lille.inria.fr/~valko/hp'
-          for f in \
-            kveton2010semisupervised.poster.pdf \
-            kveton2010semi-supervised.poster.pdf \
-            kveton2010semisupervised.poster2.pdf \
-            calandriello2016incremental.poster.pdf \
-            calandriello2016incremental.dali.poster.pdf \
-            calandriello2016sparse-hfs.poster.pdf \
-            poster_ssl.pdf; do
-            probe "$base/publications/$f"
-            probe "$base/serve.php?what=publications%2F$f"
-          done
+          set -euo pipefail
+          python -m pip install --quiet reportlab pymupdf
+          mkdir -p /tmp/arxiv-src /tmp/poster-assets
+          curl -L --fail --retry 3 'https://export.arxiv.org/e-print/1601.05675' -o /tmp/source.tar
+          tar -xf /tmp/source.tar -C /tmp/arxiv-src || (cd /tmp/arxiv-src && gunzip -c /tmp/source.tar | tar -xf -)
+          cat > /tmp/build_poster.py <<'PY'
+          from pathlib import Path
+          import fitz
+          from reportlab.pdfgen import canvas
+          from reportlab.lib.pagesizes import A0
+          from reportlab.lib.utils import ImageReader
+          from reportlab.pdfbase.pdfmetrics import stringWidth
+          
+          ROOT = Path('/tmp/arxiv-src')
+          OUT = Path('calandriello2016incremental.dali.poster.pdf')
+          W, H = A0
+          c = canvas.Canvas(str(OUT), pagesize=A0, pageCompression=1)
+          margin = 72
+          gap = 34
+          colw = (W - 2*margin - 2*gap) / 3
+          top = H - 255
+          
+          def box(x, y_top, h, title):
+              c.setLineWidth(2)
+              c.roundRect(x, y_top-h, colw, h, 14, stroke=1, fill=0)
+              c.setFont('Helvetica-Bold', 30)
+              c.drawString(x+20, y_top-42, title)
+              return y_top-70
+          
+          def wrap(text, font='Helvetica', size=21, width=None):
+              width = width or colw-40
+              words = text.split()
+              lines=[]; cur=''
+              for w in words:
+                  test=(cur+' '+w).strip()
+                  if stringWidth(test,font,size) <= width:
+                      cur=test
+                  else:
+                      if cur: lines.append(cur)
+                      cur=w
+              if cur: lines.append(cur)
+              return lines
+          
+          def paragraph(x, y, text, size=21, leading=27, bullet=False, bold_first=False):
+              prefix='• ' if bullet else ''
+              lines=wrap(prefix+text, size=size)
+              for i,line in enumerate(lines):
+                  c.setFont('Helvetica-Bold' if (bold_first and i==0) else 'Helvetica', size)
+                  c.drawString(x, y, line)
+                  y -= leading
+              return y
+          
+          def render_pdf(name, dpi=130):
+              p=ROOT/name
+              if not p.exists(): return None
+              doc=fitz.open(p)
+              pix=doc[0].get_pixmap(matrix=fitz.Matrix(dpi/72,dpi/72), alpha=False)
+              out=Path('/tmp/poster-assets')/(p.stem+'.png')
+              pix.save(out)
+              return out
+          
+          def image_fit(path, x, y, w, h):
+              if not path or not Path(path).exists(): return
+              from PIL import Image
+              im=Image.open(path)
+              iw,ih=im.size
+              s=min(w/iw,h/ih)
+              dw,dh=iw*s,ih*s
+              c.drawImage(ImageReader(im), x+(w-dw)/2, y+(h-dh)/2, dw, dh, preserveAspectRatio=True, mask='auto')
+          
+          # Header
+          c.setFont('Helvetica-Bold', 48)
+          title='Incremental Spectral Sparsification for Large-Scale Graph-Based Semi-Supervised Learning'
+          tlines=wrap(title, font='Helvetica-Bold', size=48, width=W-2*margin)
+          yy=H-75
+          for line in tlines:
+              c.drawCentredString(W/2, yy, line); yy-=55
+          c.setFont('Helvetica', 28)
+          c.drawCentredString(W/2, yy-6, 'Daniele Calandriello · Alessandro Lazaric · Michal Valko · Ioannis Koutis')
+          c.setFont('Helvetica-Oblique', 19)
+          c.drawCentredString(W/2, yy-40, 'DALI 2016 poster — archival repo-owned render reconstructed from the original research source')
+          
+          # Column 1
+          x1=margin; y=top
+          yb=box(x1,y,635,'Motivation & setting')
+          y=yb
+          for text in [
+              'Graph-based semi-supervised learning exploits abundant unlabeled samples through a similarity graph, but exact harmonic-function methods scale poorly on large graphs.',
+              'Goal: reduce memory and running time without compromising the predictive accuracy or the graph spectrum that learning depends on.',
+              'Transductive setting: a graph G=(X,E), a small random labeled set S, and a large unlabeled set T. Stable-HFS regularizes the graph Laplacian solution.'
+          ]:
+              y=paragraph(x1+20,y,text,21,28,bullet=True); y-=12
+          c.setFont('Helvetica-Bold',25); c.drawString(x1+20,y,'Core question')
+          y-=35
+          y=paragraph(x1+20,y,'Can a streaming sparsifier preserve the learning guarantees while keeping only near-linear memory?',23,30)
+          
+          y=top-660
+          yb=box(x1,y,800,'Sparse-HFS')
+          y=yb
+          for text in [
+              'Process the edge stream in blocks and repeatedly resparsify the union of the previous sparsifier and the new block.',
+              'Estimate effective resistances with an SDD solver; use them as importance-sampling probabilities.',
+              'Keep the intermediate graph spectrally close to the full graph at every resparsification.',
+              'Center the labels, then solve Stable-HFS on the final sparse graph.'
+          ]:
+              y=paragraph(x1+20,y,text,21,28,bullet=True); y-=10
+          c.setFont('Helvetica-Bold',24); c.drawString(x1+20,y,'Output')
+          y-=32
+          y=paragraph(x1+20,y,'A sparse graph H and an SSL prediction whose generalization error is controlled relative to the full-graph solution.',21,28)
+          
+          y=top-1490
+          yb=box(x1,y,1160,'Streaming picture')
+          y=yb
+          # simple process diagram
+          stages=[('edge blocks','Δ1, Δ2, …'),('resparsify','effective resistance'),('bounded H','spectral approximation'),('Stable-HFS','prediction')]
+          sy=y-60
+          for i,(a,b) in enumerate(stages):
+              bx=x1+45+(i%2)*(colw/2-20); by=sy-(i//2)*230
+              c.roundRect(bx,by-120,colw/2-70,120,10,stroke=1,fill=0)
+              c.setFont('Helvetica-Bold',20); c.drawCentredString(bx+(colw/2-70)/2,by-43,a)
+              c.setFont('Helvetica',16); c.drawCentredString(bx+(colw/2-70)/2,by-78,b)
+          c.setFont('Helvetica-Bold',22); c.drawString(x1+25,sy-525,'Key design constraints')
+          yy2=sy-565
+          for text in ['sparsifier size stays bounded','intermediate approximation stays accurate','amortized work remains polylogarithmic per edge']:
+              yy2=paragraph(x1+30,yy2,text,19,25,bullet=True); yy2-=6
+          
+          # Column 2
+          x2=margin+colw+gap; y=top
+          yb=box(x2,y,1040,'Theoretical guarantees')
+          y=yb
+          y=paragraph(x2+20,y,'Spectral approximation',23,30,bold_first=True); y-=8
+          y=paragraph(x2+20,y,'With high probability, every eigenvalue of the sparsified Laplacian stays within a (1±ε) factor of the corresponding eigenvalue of the original graph.',21,28); y-=20
+          y=paragraph(x2+20,y,'Learning guarantee',23,30,bold_first=True); y-=8
+          y=paragraph(x2+20,y,'Because H is spectrally similar to G, the perturbation introduced in the Stable-HFS prediction can be bounded explicitly in the generalization error.',21,28); y-=20
+          y=paragraph(x2+20,y,'Complexity',23,30,bold_first=True); y-=8
+          for t in ['O(n log² n) memory for the sparsifier','O(m log³ n) preprocessing over the edge stream','O(n log³ n) final solve, up to the SDD-solver factors']:
+              y=paragraph(x2+20,y,t,21,28,bullet=True); y-=8
+          
+          y=top-1070
+          yb=box(x2,y,700,'Why sparsification is the right abstraction')
+          y=yb
+          for t in [
+              'Subsampling vertices can destroy the Laplacian geometry needed by graph-based learning.',
+              'Spectral sparsification instead preserves all Laplacian quadratic forms simultaneously.',
+              'This gives a direct bridge from graph approximation guarantees to learning guarantees.'
+          ]:
+              y=paragraph(x2+20,y,t,21,28,bullet=True); y-=12
+          
+          y=top-1800
+          yb=box(x2,y,850,'Complexity comparison')
+          y=yb
+          c.setFont('Helvetica-Bold',19)
+          rows=[('Method','Space','Preprocessing','Solve'),('Sparse-HFS','n log²n','m log³n','n log³n'),('Stable-HFS','m','m','mn'),('Eigenfunctions','nd+nq+b²','qb³+db³','q³+nq'),('Subsampling','sk','m','s²k+n')]
+          widths=[180,135,190,160]
+          rowh=60
+          for r,row in enumerate(rows):
+              xx=x2+20
+              for j,val in enumerate(row):
+                  c.rect(xx,y-rowh+8,widths[j],rowh,stroke=1,fill=0)
+                  c.setFont('Helvetica-Bold' if r==0 else 'Helvetica',15 if r else 16)
+                  c.drawCentredString(xx+widths[j]/2,y-31,val)
+                  xx+=widths[j]
+              y-=rowh
+          
+          # Column 3
+          x3=margin+2*(colw+gap); y=top
+          yb=box(x3,y,1090,'Experiments')
+          y=yb
+          data=render_pdf('data.pdf',120)
+          toy=render_pdf('toy_result.pdf',150)
+          edge=render_pdf('edge_ratio_plot.pdf',150)
+          image_fit(data,x3+25,y-350,colw-50,315)
+          c.setFont('Helvetica',16); c.drawString(x3+25,y-375,'Toy graph: two positive and two negative clusters; only four labels.')
+          image_fit(toy,x3+25,y-690,(colw-65)/2,260)
+          image_fit(edge,x3+40+(colw-65)/2,y-690,(colw-65)/2,260)
+          c.setFont('Helvetica',16); c.drawString(x3+25,y-720,'Sparse-HFS tracks Stable-HFS accuracy while the edge ratio shrinks as the graph densifies.')
+          
+          y=top-1120
+          yb=box(x3,y,760,'Large-scale behavior')
+          y=yb
+          cost=render_pdf('cost_plot_combined.pdf',150)
+          image_fit(cost,x3+25,y-430,colw-50,390)
+          y-=470
+          for t in [
+              'TREC07 spam classification: sparse graph methods trade a small approximation error for major memory savings.',
+              'As k grows, the full k-NN graph becomes dense while the sparsifier remains near-linear in n.'
+          ]:
+              y=paragraph(x3+20,y,t,19,25,bullet=True); y-=10
+          
+          y=top-1910
+          yb=box(x3,y,740,'Takeaways')
+          y=yb
+          for t in [
+              'Preserve the spectrum, not every edge.',
+              'Streaming resparsification makes graph SSL practical at large scale.',
+              'The approximation is accompanied by an explicit learning guarantee, not only a computational heuristic.',
+              'The same spectral viewpoint later supports stronger ridge-aware graph learning methods.'
+          ]:
+              y=paragraph(x3+20,y,t,21,28,bullet=True); y-=13
+          
+          c.setFont('Helvetica',15)
+          c.drawString(margin,38,'Source: Calandriello, Lazaric, Valko, Koutis — arXiv:1601.05675. Archival poster PDF generated for misovalko/publications.')
+          c.save()
+          PY
+          python /tmp/build_poster.py
+          test "$(head -c 4 calandriello2016incremental.dali.poster.pdf)" = '%PDF'
+          pdfinfo calandriello2016incremental.dali.poster.pdf | grep -E 'Pages|Page size|File size'
+      - name: Commit poster and remove importer
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Michal Valko'
+          git config user.email '33050860+misovalko@users.noreply.github.com'
+          git add calandriello2016incremental.dali.poster.pdf
+          git rm .github/workflows/import-archived-posters.yml
+          git commit -m 'Add repo-owned DALI poster for incremental spectral sparsification'
+          git push origin HEAD:master
