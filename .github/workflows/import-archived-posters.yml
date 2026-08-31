@@ -1,0 +1,34 @@
+name: Import archived posters
+
+on:
+  push:
+    paths:
+      - .github/workflows/import-archived-posters.yml
+
+permissions:
+  contents: write
+
+jobs:
+  import-posters:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download archived poster PDFs from Drive
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet gdown
+          gdown 'https://drive.google.com/uc?id=1CyOuMrEYitqgwufrWvGvEOJk9x-PL4T7' -O calandriello2016incremental.dali.poster.pdf
+          gdown 'https://drive.google.com/uc?id=12rEXVc33UudVh4v_DgSwN8Vqtz3PfGvi' -O kveton2010semisupervised.poster.pdf
+          test "$(head -c 4 calandriello2016incremental.dali.poster.pdf)" = '%PDF'
+          test "$(head -c 4 kveton2010semisupervised.poster.pdf)" = '%PDF'
+      - name: Commit poster assets and remove importer
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Michal Valko'
+          git config user.email '33050860+misovalko@users.noreply.github.com'
+          git add calandriello2016incremental.dali.poster.pdf kveton2010semisupervised.poster.pdf
+          git rm .github/workflows/import-archived-posters.yml
+          git commit -m 'Add archived DALI and max-margin posters'
+          git push origin HEAD:master
