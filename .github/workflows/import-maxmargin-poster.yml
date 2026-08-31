@@ -1,0 +1,155 @@
+name: Import max-margin poster
+
+on:
+  push:
+    paths:
+      - .github/workflows/import-maxmargin-poster.yml
+
+permissions:
+  contents: write
+
+jobs:
+  build-poster:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build archival poster PDF
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet reportlab pymupdf
+          cat > /tmp/build.py <<'PY'
+          from pathlib import Path
+          import fitz
+          from reportlab.pdfgen import canvas
+          from reportlab.pdfbase.pdfmetrics import stringWidth
+          from reportlab.lib.pagesizes import landscape
+          from reportlab.lib.units import inch
+          OUT=Path('kveton2010semisupervised.poster.pdf')
+          W,H=48*inch,36*inch
+          c=canvas.Canvas(str(OUT),pagesize=(W,H),pageCompression=1)
+          margin=44; gap=24; col=(W-2*margin-2*gap)/3; top=H-170
+          def wrap(text,font='Helvetica',size=18,width=None):
+              width=width or col-32; out=[]; cur=''
+              for w in text.split():
+                  t=(cur+' '+w).strip()
+                  if stringWidth(t,font,size)<=width: cur=t
+                  else:
+                      if cur: out.append(cur)
+                      cur=w
+              if cur: out.append(cur)
+              return out
+          def para(x,y,text,size=18,leading=23,bullet=False,bold=False,width=None):
+              if bullet: text='• '+text
+              for line in wrap(text,'Helvetica-Bold' if bold else 'Helvetica',size,width):
+                  c.setFont('Helvetica-Bold' if bold else 'Helvetica',size); c.drawString(x,y,line); y-=leading
+              return y
+          def box(x,y,h,title):
+              c.setLineWidth(2); c.roundRect(x,y-h,col,h,12,stroke=1,fill=0)
+              c.setFont('Helvetica-Bold',25); c.drawString(x+16,y-34,title); return y-58
+          title='Semi-Supervised Learning with Max-Margin Graph Cuts'
+          c.setFont('Helvetica-Bold',42); yy=H-58
+          for line in wrap(title,'Helvetica-Bold',42,W-2*margin): c.drawCentredString(W/2,yy,line); yy-=48
+          c.setFont('Helvetica',23); c.drawCentredString(W/2,yy-2,'Branislav Kveton · Michal Valko · Ali Rahimi · Ling Huang')
+          c.setFont('Helvetica-Oblique',14); c.drawCentredString(W/2,yy-30,'Archival repo-owned poster render reconstructed from the historical poster and AISTATS 2010 paper')
+          # col 1
+          x=margin; y=top; y=box(x,y,620,'Motivation')
+          for t in [
+              'Semi-supervised max-margin learning should use abundant unlabeled data without turning the optimization problem non-convex.',
+              'Manifold regularization of SVMs is a strong baseline, but with severely restricted discriminators—especially linear functions—it can produce unintuitive decision boundaries.',
+              'We want a method that first exploits graph structure and then learns a max-margin classifier consistent with that structure.'
+          ]: y=para(x+16,y,t,18,23,bullet=True); y-=10
+          c.setFont('Helvetica-Bold',21); c.drawString(x+16,y,'Key idea'); y-=30
+          y=para(x+16,y,'Use the harmonic-function solution to infer soft labels on the graph, then train a max-margin discriminator conditioned on those induced labels.',20,25)
+          y=top-650; y=box(x,y,760,'Two-stage construction')
+          c.setFont('Helvetica-Bold',21); c.drawString(x+16,y,'1. Graph inference'); y-=32
+          y=para(x+16,y,'Build a data-adjacency graph and compute a regularized harmonic-function solution. This propagates information from the labeled examples through nearby unlabeled points.',18,23); y-=18
+          c.setFont('Helvetica-Bold',21); c.drawString(x+16,y,'2. Max-margin projection'); y-=32
+          y=para(x+16,y,'Learn a discriminator that maximizes margin with respect to the labels induced by the graph solution. Increasing the graph regularization smoothly interpolates between semi-supervised learning on all data and ordinary supervised learning.',18,23); y-=18
+          for t in ['Convex optimization problem','Kernel trick available','Sparse graph adjacency can be exploited computationally']:
+              y=para(x+16,y,t,18,23,bullet=True); y-=6
+          y=top-1440; y=box(x,y,760,'Geometric intuition')
+          c.setFont('Helvetica',18); c.drawString(x+16,y,'Graph propagation separates two dense groups even when a linear'); y-=24
+          c.drawString(x+16,y,'manifold-regularized SVM cannot express the desired boundary directly.'); y-=55
+          # Draw schematic clusters/boundary
+          bx=x+65; by=y-330; bw=col-130; bh=300
+          c.rect(bx,by,bw,bh,stroke=1,fill=0)
+          for i in range(12):
+              px=bx+55+(i%4)*34; py=by+65+(i//4)*40
+              c.circle(px,py,7,stroke=1,fill=0)
+          for i in range(12):
+              px=bx+bw-160+(i%4)*34; py=by+150+(i//4)*40
+              c.rect(px-6,py-6,12,12,stroke=1,fill=0)
+          c.setLineWidth(3); c.line(bx+bw/2-15,by+20,bx+bw/2+15,by+bh-20)
+          c.setFont('Helvetica',14); c.drawCentredString(bx+bw/2,by-22,'graph-induced labels → max-margin separator')
+          # col 2
+          x=margin+col+gap; y=top; y=box(x,y,760,'Why it differs from prior approaches')
+          y=para(x+16,y,'Versus semi-supervised SVMs with a hat loss',19,24,bold=True); y-=6
+          y=para(x+16,y,'The proposed objective is convex and can be solved optimally, rather than relying on a non-convex unlabeled-data loss.',18,23); y-=16
+          y=para(x+16,y,'Versus manifold regularization',19,24,bold=True); y-=6
+          y=para(x+16,y,'The graph solution is used to define the classification task before imposing the max-margin discriminator. This is particularly useful when the hypothesis class is strongly constrained.',18,23); y-=16
+          y=para(x+16,y,'Theory',19,24,bold=True); y-=6
+          y=para(x+16,y,'The generalization error can be controlled by combining transductive graph-learning bounds with standard inductive margin bounds.',18,23)
+          y=top-800; y=box(x,y,700,'Experimental setup')
+          for t in [
+              'Three UCI tasks: letter recognition, digit recognition, and image segmentation.',
+              'Linear, cubic, and RBF kernels.',
+              'Labeled fractions from 1% to 10%.',
+              'Compare supervised SVM, manifold regularization (MR), and max-margin graph cuts (GC).'
+          ]: y=para(x+16,y,t,18,23,bullet=True); y-=10
+          c.setFont('Helvetica-Bold',19); c.drawString(x+16,y,'Qualitative result'); y-=28
+          y=para(x+16,y,'GC is especially attractive for restricted linear decision boundaries; with flexible RBF kernels, GC and manifold regularization become much closer.',18,23)
+          y=top-1530; y=box(x,y,680,'Empirical summary')
+          y=para(x+16,y,'Across the historical poster’s 36 UCI comparisons, max-margin graph cuts outperform manifold regularization in 29 experiments.',20,26,bold=True); y-=20
+          y=para(x+16,y,'The strongest gains appear when the classifier class is too restricted for manifold regularization to faithfully reflect the cluster structure.',18,23)
+          # mini scorecard
+          labels=[('Letter recognition','GC usually best'),('Digit recognition','GC competitive/best'),('Image segmentation','GC often best'),('RBF kernels','GC ≈ MR')]
+          sy=y-55
+          for a,b in labels:
+              c.setFont('Helvetica-Bold',16); c.drawString(x+20,sy,a)
+              c.setFont('Helvetica',16); c.drawRightString(x+col-20,sy,b); sy-=42
+          # col 3
+          x=margin+2*(col+gap); y=top; y=box(x,y,690,'Favorable properties')
+          for t in [
+              'Convex objective: optimization has a global solution.',
+              'Kernelizable: nonlinear discriminators require no explicit feature expansion.',
+              'Graph-aware: unlabeled examples influence the induced labels through connectivity.',
+              'Sparse-friendly: sparse adjacency matrices can be used directly.',
+              'Generalization bounds: the construction admits a theoretical analysis.'
+          ]: y=para(x+16,y,t,19,24,bullet=True); y-=9
+          y=top-730; y=box(x,y,900,'Algorithm sketch')
+          steps=[
+              ('Input','labeled examples + unlabeled examples + graph W'),
+              ('Harmonic step','solve the regularized graph-label propagation problem'),
+              ('Induced targets','obtain soft/graph-consistent labels for all examples'),
+              ('Margin step','fit a maximum-margin discriminator to the induced labels'),
+              ('Predict','use the learned discriminator on new examples')]
+          sy=y
+          for i,(a,b) in enumerate(steps,1):
+              c.circle(x+42,sy-4,15,stroke=1,fill=0); c.setFont('Helvetica-Bold',15); c.drawCentredString(x+42,sy-9,str(i))
+              c.setFont('Helvetica-Bold',18); c.drawString(x+70,sy,a); sy-=24
+              sy=para(x+70,sy,b,16,20,width=col-100); sy-=20
+              if i<len(steps): c.line(x+42,sy+9,x+42,sy-10)
+          y=top-1660; y=box(x,y,620,'Takeaways')
+          for t in [
+              'Separate “use the graph” from “fit the classifier.”',
+              'This separation keeps the optimization convex and makes the method robust when the final discriminator is simple.',
+              'The work is an early example of combining graph-based semi-supervision with margin-based prediction in a modular way.'
+          ]: y=para(x+16,y,t,19,24,bullet=True); y-=12
+          c.setFont('Helvetica',13); c.drawString(margin,28,'Source: Kveton, Valko, Rahimi, Huang — AISTATS 2010 / JMLR W&CP 9. Archival poster render generated for misovalko/publications.')
+          c.save()
+          doc=fitz.open(OUT); assert len(doc)==1 and doc[0].rect.width>0
+          print(f'validated {OUT} pages={len(doc)} bytes={OUT.stat().st_size}')
+          PY
+          python /tmp/build.py
+          test "$(head -c 4 kveton2010semisupervised.poster.pdf)" = '%PDF'
+      - name: Commit poster and remove importer
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Michal Valko'
+          git config user.email '33050860+misovalko@users.noreply.github.com'
+          git add kveton2010semisupervised.poster.pdf
+          git rm .github/workflows/import-maxmargin-poster.yml
+          git commit -m 'Add repo-owned max-margin graph-cuts poster'
+          git push origin HEAD:master
