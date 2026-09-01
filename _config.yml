@@ -1,0 +1,8 @@
+# GitHub Pages publishes this repository at /publications/.
+# Keep the largest archival talk decks in Git, but serve them directly from
+# GitHub rather than copying them into the Pages artifact.
+exclude:
+  - tenyearroad2019.talk.pdf
+  - valko2019how.talk.pdf
+  - calandriello2018improved.talk.pdf
+  - valko2018power.talk.pdf
