@@ -1,3 +1,8 @@
 # Each distinct paper has one canonical local PDF with the normal .pdf name.
 # Keep arXiv/DOI/PMLR/OpenReview URLs as metadata links, not duplicate local aliases.
 *.arxiv.pdf
+
+# Local/build noise.
+.DS_Store
+Thumbs.db
+_site/
