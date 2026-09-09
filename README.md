@@ -1,6 +1,8 @@
-# Publications assets
+# Michal Valko — Research Publications
 
-Public publication-related assets for the Michal Valko academic website.
+Research publication assets by **Michal Valko**, a French-Slovak AI researcher and computer scientist working on reinforcement learning, LLM alignment, self-supervised learning, and bandit algorithms.
+
+[Personal website](https://misovalko.github.io/) · [Google Scholar](https://scholar.google.com/citations?user=jrazNCQAAAAJ&sortby=pubdate) · [ORCID](https://orcid.org/0009-0009-2673-0144) · [GitHub](https://github.com/misovalko)
 
 This repository is the canonical home for files served under:
 
