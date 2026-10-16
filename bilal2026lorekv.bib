@@ -1,0 +1,10 @@
+@article{bilal2026lorekv,
+  abstract = {Most KV-cache eviction methods ask, in effect, which memory appeared important while reading the prompt? We instead ask which memory will matter while answering? Since decoding queries are unavailable at eviction time, prior future-aware methods rely on pseudo-responses or synthetic future-query estimates. We cast fixed-budget future-aware eviction as distributional estimation over plausible model-conditional query trajectories and introduce LORE-KV (Lookahead Output-perturbation with Reliability-weighted Ensembles for Key-Value caches), a training-free method that samples short autoregressive continuations from the frozen target model and uses their response-side query states to estimate prompt-token utility. Tokens are scored by projected leave-one-out attention-output deletion cost and aggregated across sampled futures with optional trajectory weighting. The temporary continuations are discarded before final decoding, requiring no auxiliary model or training. Ablations isolate the mechanism: at B=128, a single response-side continuation recovers about 89% of the gain over the prompt-window control, while additional futures provide smaller improvements. At B=128, LORE-KV raises the LongBench average on Qwen2.5-14B from 45.49 to 48.24 (+2.75) and the 16K RULER average on Mistral-7B from 45.20 to 51.05 (+5.85); on Llama-3.1-8B, the RULER margin over AnDPro widens to +8.13 and +11.65 points at 64K and 128K contexts. Gains diminish at larger cache budgets and coexist with task-level regressions. LORE-KV incurs 1.46-2.77x AnDPro's per-sample wall-clock time as a one-time compression overhead across six dense and hybrid-attention backbones. Project webpage: https://ahsanbilal7.github.io/train_free_kv/},
+  author = {Ahsan Bilal and Muhammad Ahmed Mohsin and Muhammad Umer and Wajih Hassan Raza and Atta Ul Asad and Young D. Kwon and Michal Valko and Dean F. Hougen},
+  title = {{Monte Carlo Estimation for KV Cache Eviction}},
+  url = {https://misovalko.github.io/publications/bilal2026lorekv.pdf},
+  archivePrefix = {arXiv},
+  arxivId = {2610.07643},
+  eprint = {2610.07643},
+  year = {2026}
+}
