@@ -103,7 +103,7 @@ def get_rpc_invoker(backend='redis', url='localhost', port=6379, async_eval=True
 
             task_queue = Queue(
                 connection=Redis(url, port, password="yourpasswordhere"),
-                async=async_eval)
+                is_async=async_eval)
 
             def call_rpc_function(func, *args):
                 return task_queue.enqueue(func, *args, timeout=86400)
